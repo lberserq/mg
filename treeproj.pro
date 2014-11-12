@@ -10,7 +10,11 @@ SOURCES += main.cpp \
     leaf.cpp \
     shaderprogram.cpp \
     branch.cpp \
-    shader.cpp
+    shader.cpp \
+    tree.cpp \
+    branchvis.cpp \
+    objectvis.cpp \
+    leafvis.cpp
 
 HEADERS += \
     object.h \
@@ -18,9 +22,14 @@ HEADERS += \
     shaderprogram.h \
     shaderhelper.h \
     shader.h \
-    branch.h
+    branch.h \
+    tree.h \
+    branchvis.h \
+    objectvis.h \
+    leafvis.h
 
 
 OTHER_FILES += \
-    Vertex.vert
+    Vertex.vert \
+    TODO.txt
 

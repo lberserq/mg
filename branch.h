@@ -1,14 +1,25 @@
 #pragma once
 #include "object.h"
 
-//branch of tree is cylinder
-class branch :
-    public object
+enum
 {
+    MAX_DEPTH = 10,
+    MAX_CAPACITY = 20
+};
+//branch of tree is cylinder
+class branch : public object
+{
+    int level_id;
+
+    void init_matrix() override;
 public:
     branch(object *parent = NULL);
     virtual ~branch(void);
-	//redefinition of 
-    virtual void build_model() override;
+    //redefinition of
+    void set_level(int id) {
+        level_id = id;
+    }
+    virtual void add_child(object *obj) override;
+    void draw() override;
 };
 

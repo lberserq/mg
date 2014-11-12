@@ -1,0 +1,15 @@
+TODO
+BASE
+IMPORTANTE
+[] models scaling
+[] models normals//partially realised
+NON-IMPORTANTE
+[x]realise matrix representation and slow hren of a model
+[x]realise of camera moving(spherical coordinates)
+[]realise of animation
+[]
+[x] refactor this code in the world class
+ADDITION
+[] realise textures
+[] realise open world moving
+[] realise loading models for 3ds

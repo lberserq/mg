@@ -3,9 +3,72 @@
 #define _USE_MATH_DEFINES
 #endif
 #include <math.h>
+#include "tree.h"
+#include <glm/gtx/string_cast.hpp>
+#include <iostream>
+using std::cerr;
+using std::endl;
 
-branch::branch(object *parent):object(O_LEAF, parent)
+
+
+void branch::init_matrix() {
+    model_matrix = glm::mat4();
+    model_matrix = glm::translate(model_matrix,glm::vec3(-0.5f,1.0f,0.0f));
+    object::init_matrix();
+    model_matrix = glm::scale(model_matrix,glm::vec3(0.05f * (1 + w),1.0f * (0.4 + l) ,0.05f * (1 + w)));
+
+}
+
+
+
+
+void branch::add_child(object *obj) {
+    obj->m_parent = this;
+    if (obj->getType() == O_BRANCH) {
+        if (level_id >= MAX_DEPTH) {
+            delete obj;
+            return;
+        }
+        dynamic_cast<branch *>(obj)->set_level(level_id + 1);
+    }
+
+    if (childs.size() >= MAX_CAPACITY || (m_parent == NULL && (obj->getType() != O_BRANCH || childs.size() >= 5))) {
+        unsigned i = 0;
+        while ( i < childs.size() && childs[i]->getType() != O_BRANCH) {
+            i++;
+        }
+        if (i == childs.size()) {
+            delete obj;
+            return;
+        } else {
+            childs[i]->add_child(obj);
+        }
+    } else {
+        if (obj->getType() == O_BRANCH && level_id >= 0) {
+            if (childs.size() == 0) {
+                obj->shift = glm::vec3(0, l, 0);
+                obj->h = l;
+                obj->angleoxz = 0.0;
+                obj->angley = 0.0;
+            }
+            branch *p = dynamic_cast<branch *>(obj);
+            p->set_level(level_id + 1);
+        } else {
+            obj->shift = glm::vec3(0, (l * (childs.size() + 1.0f)) /  MAX_CAPACITY, 0);
+            obj->h = (l * (childs.size() + 1.0f)) /  MAX_CAPACITY;
+            obj->angleoxz = M_PI / 180.0f * (rand() % 30 + 1.0f);
+            obj->angley = M_PI / 180.0f * (rand() % 10 + 1.0f);
+        }
+        object::add_child(obj);
+    }
+
+}
+
+branch::branch(object *parent):object(O_BRANCH, parent)
 {
+    if (parent == NULL) {
+        level_id = 0;
+    }
 }
 
 
@@ -13,125 +76,21 @@ branch::~branch(void)
 {
 }
 
-void branch::build_model()
-{
-	if (pData)
-	{
-		delete[] pData;
-		delete[] pIndices;
-	}
+void branch::draw() {
+    init_matrix();
+    branchVis *f = Tree::getBranchVis();
+    f->build_model();
+    Tree::gui_pre_frame(model_matrix, 0);
+    if (childs.size() || m_parent != NULL) {
+        //std::cerr << "MY_MATRIX IS \n" << glm::to_string(trans_matr * model_matrix) << endl;
+    }
+//    f->visualize();
+//    return;
+    for (unsigned i = 0; i < childs.size(); i++) {
+        childs[i]->draw();
+    }
 
-	unsigned int radialStep = 10;
-	unsigned int heightStep = 10;
-	float cylRadius = 1.0f;
-	float cylHeight = 1.0f;
+    f->visualize();
 
-	//number of points
-	dataCount = (radialStep+1)*heightStep+2; 
-	//number of triangles
-	unsigned int nTriangles = 2*radialStep*(heightStep-1)+2*radialStep;
-	//number of indices
-	indicesCount = 3*nTriangles;
-
-	pData = new VertexData [dataCount];
-	pIndices = new unsigned int [indicesCount];
-	
-	//fill in pData array
-
-	//generate elements on side
-	for (unsigned int j=0; j<heightStep; j++)
-	{
-		float zPos = cylHeight*j/(heightStep-1);
-		for (unsigned int i=0; i<radialStep+1; i++)
-		{
-			unsigned int pointId = j*(radialStep+1)+i;
-
-			float fi = 2*M_PI*i/radialStep; //from 0 to 360 degrees
-			float xPos = cos(fi);
-			float yPos = sin(fi);
-			
-			pData[pointId].pos = glm::vec3(cylRadius*xPos, zPos,cylRadius*yPos);
-			pData[pointId].nor = glm::vec3(xPos,0,yPos);
-			pData[pointId].tex = glm::vec2((xPos+1)/2, (yPos+1)/2);		
-		}
-	}
-	//generate north pole
-	{
-		unsigned int pointId = heightStep*(radialStep+1);
-		pData[pointId].pos = glm::vec3(0,cylHeight,0);
-		pData[pointId].nor = glm::vec3(0,1,0);
-		pData[pointId].tex = glm::vec2(0.5f, 0.5f);		
-	}
-	//generate south pole
-	{
-		unsigned int pointId = heightStep*(radialStep+1)+1;
-		pData[pointId].pos = glm::vec3(0,0,0);
-		pData[pointId].nor = glm::vec3(0,-1,0);
-		pData[pointId].tex = glm::vec2(0.5f, 0.5f);		
-	}
-	//fill in pIndices array
-
-	//fill in side triangles (first 6*radialStep*(heightStep-1))
-	for (unsigned int j=0; j<heightStep-1; j++)
-	{
-		for (unsigned int i=0; i<radialStep; i++)
-		{
-			unsigned int pointId = j*(radialStep+1)+i;
-			unsigned int indexId = j*radialStep+i;
-			//pData configuration
-			//------------------------
-			//--.(i,j+1)--.(i+1,j+1)--
-			//--.(i,  j)--.(i+1,  j)--
-			//------------------------
-
-			//pData indices
-			//------------------------
-			//--pointId+radialStep+1--pointId+radialStep+2----
-			//--pointId---------------pointId+1---------------
-			
-			//triangle 1			
-			//   /|
-			//  / |
-			// /__|  
-			pIndices[6*indexId+0] = pointId;
-			pIndices[6*indexId+1] = pointId+1;
-			pIndices[6*indexId+2] = pointId+radialStep+2;
-			//triangle 2
-			// ____
-			// |  /
-			// | /
-			// |/  
-			pIndices[6*indexId+3] = pointId;
-			pIndices[6*indexId+4] = pointId+radialStep+2;
-			pIndices[6*indexId+5] = pointId+radialStep+1;
-		}
-	}
-	//fill in north pole triangles (next 3*radialStep)
-	{
-		unsigned int startIndex = 6*radialStep*(heightStep-1);
-		unsigned int northPoleId = heightStep*(radialStep+1);
-		for (unsigned int i=0; i<radialStep; i++)
-		{
-			//get last row
-			unsigned int pointId = (heightStep-1)*(radialStep+1)+i;
-			pIndices[startIndex+3*i+0] = pointId;
-			pIndices[startIndex+3*i+1] = pointId+1;
-			pIndices[startIndex+3*i+2] = northPoleId;
-		}
-	}
-	
-	//fill in south pole triangles (last 3*radialStep)
-	{
-		unsigned int startIndex = 6*radialStep*(heightStep-1)+3*radialStep;	
-		unsigned int southPoleId = heightStep*(radialStep+1)+1;
-
-		for (unsigned int i=0; i<radialStep; i++)
-		{
-			//get first row
-			unsigned int pointId = i;
-			pIndices[startIndex+3*i+0] = pointId;
-			pIndices[startIndex+3*i+1] = southPoleId;
-			pIndices[startIndex+3*i+2] = pointId+1;
-		}
-	}
 }
+
