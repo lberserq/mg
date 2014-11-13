@@ -57,7 +57,7 @@ void branchVis::build_model()
             float yPos = sin(fi);
 
             pData[pointId].pos = glm::vec3(cylRadius*xPos, zPos,cylRadius*yPos);
-            pData[pointId].nor = glm::vec3(xPos,fcos(psi),yPos);
+            pData[pointId].nor = glm::vec3(xPos,fsin(psi),yPos);
             pData[pointId].nor = glm::rotate(pData[pointId].nor, al,  glm::vec3(1, 0, 0));
             pData[pointId].tex = glm::vec2((xPos+1)/2, (yPos+1)/2);
         }

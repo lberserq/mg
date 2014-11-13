@@ -3,7 +3,7 @@
 
 enum
 {
-    MAX_DEPTH = 10,
+    MAX_DEPTH = 20,
     MAX_CAPACITY = 20
 };
 //branch of tree is cylinder

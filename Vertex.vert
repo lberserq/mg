@@ -22,6 +22,8 @@ out VertexData
 	vec2 texcoord;
 } VertexOut;
 
+//varying vec3 n;
+//varying vec3 v;
 void main()
 {
 	gl_Position = modelViewProjectionMatrix*vec4(pos.xyz,1);
@@ -29,4 +31,9 @@ void main()
 	VertexOut.position = vec3(modelViewMatrix*vec4(pos.xyz,1));
 	VertexOut.normal = vec3(normalMatrix*vec4(nor.xyz,1));	
 	VertexOut.texcoord = vec2(tex.xy);
+
+
+//        v = vec3(gl_ModelViewMatrix * gl_Vertex);
+//        n = normalize(gl_NormalMatrix * gl_Normal);
+//        gl_Position = ftransform();
 }

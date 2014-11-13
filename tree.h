@@ -23,8 +23,8 @@ const float m_fIncWStep = 0.002 * T_NEW;
 
 const double MAX_ANGLE = M_PIl / 180.0  * 70.0;
 const double MIN_ANGLE = M_PIl / 180.0 * 10.0;
-const int MAX_TICKS = 5 + 4 * T_GROW * T_NEW;
-
+const int MAX_TICKS = 5 + 5 * T_GROW * T_NEW;
+const double hard_eps  = 1e-5;
 using std::string;
 enum
 {
@@ -62,6 +62,7 @@ class Tree //WORLD CLASS
 
     static ShaderProgram shaderProgram;
     void draw_scene();
+    void light_scene();
   //  Tree();
 public:
     /*Tree() {

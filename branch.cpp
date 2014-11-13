@@ -32,7 +32,7 @@ void branch::init_matrix() {
     }
     model_matrix = glm::scale(model_matrix, glm::vec3(w,  l,  w));
     model_matrix = glm::scale(model_matrix, glm::vec3(0.05f, 1.0f, 0.05f));
-    std::cerr << "LTYME == " << my_ltime <<" MY MATRIX IS \n" << glm::to_string( model_matrix) << endl;
+    //std::cerr << "LTYME == " << my_ltime <<" MY MATRIX IS \n" << glm::to_string( model_matrix) << endl;
 }
 
 
@@ -61,12 +61,10 @@ void branch::add_child(object *obj) {
         }
     } else {
         if (obj->getType() == O_BRANCH && childs.size() == 0) {
-            //if (childs.size() == 0) {
             obj->shift = glm::vec3(0, l, 0);
             obj->h = l;
             obj->angleoxz = 0.0;
             obj->angley = 0.0;
-            //            }
         } else {
             //obj->shift = glm::vec3(0, (l * (childs.size() + 1.0f)) /  MAX_CAPACITY, 0);
             obj->h = (MAX_CAPACITY - l * (childs.size() + 4.0f)) /  MAX_CAPACITY;
@@ -74,7 +72,11 @@ void branch::add_child(object *obj) {
                 delete obj;
                 return;
             }
-            obj->angleoxz =  (rand() %  360 + 1.0f);
+            if (m_parent != NULL) {
+                obj->angleoxz =  (rand() %  90 + 1.0f);
+            } else {
+                obj->angleoxz = (rand() % 360 + 1.0f);
+            }
             obj->angley = (rand() % 180 + 1.0f);
             obj->angleoxz *= M_PI / 180.0f;
             obj->angley *= M_PI / 180.0f;

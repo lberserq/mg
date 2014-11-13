@@ -31,5 +31,6 @@ HEADERS += \
 
 OTHER_FILES += \
     Vertex.vert \
-    TODO.txt
+    TODO.txt \
+    Fragment.frag
 

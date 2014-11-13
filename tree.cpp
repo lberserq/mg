@@ -52,79 +52,80 @@ void Tree::models_init() {
     VBranch->initGLBuffers(shaderProgram.programObject,"pos","nor","tex");
     VLeaf->initGLBuffers(shaderProgram.programObject,"pos","nor","tex");
     init_textures();
+    light_scene();
 }
 
 void Tree::draw_scene()
 {
     glClearColor(0,0,0,0);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-      //Draw triangle with shaders (in screen coordinates)
-      //need to set uniform in modelViewMatrix
+    //Draw triangle with shaders (in screen coordinates)
+    //need to set uniform in modelViewMatrix
 
-      glUseProgram(shaderProgram.programObject);
+    glUseProgram(shaderProgram.programObject);
 
-      //we will need this uniform locations to connect them to our variables
-      int locMV = glGetUniformLocation(shaderProgram.programObject,"modelViewMatrix");
-      int locN = glGetUniformLocation(shaderProgram.programObject,"normalMatrix");
-      int locP = glGetUniformLocation(shaderProgram.programObject,"modelViewProjectionMatrix");
-      int texLoc = glGetUniformLocation(shaderProgram.programObject,"textureSampler");
-      int locFlag = glGetUniformLocation(shaderProgram.programObject,"useTexture");
-      //if there is some problem
-      if (locMV<0 || locN<0 || locP<0 || texLoc <0 || locFlag<0)
-      {
-          //not all uniforms were allocated - show blue screen.
-          //check your variables properly. May be there is unused?
-          glClearColor(0,0,1,1);
-          glClear(GL_COLOR_BUFFER_BIT);
-          //end frame visualization
-          glutSwapBuffers();
-          return;
-      }
+    //we will need this uniform locations to connect them to our variables
+    int locMV = glGetUniformLocation(shaderProgram.programObject,"modelViewMatrix");
+    int locN = glGetUniformLocation(shaderProgram.programObject,"normalMatrix");
+    int locP = glGetUniformLocation(shaderProgram.programObject,"modelViewProjectionMatrix");
+    int texLoc = glGetUniformLocation(shaderProgram.programObject,"textureSampler");
+    int locFlag = glGetUniformLocation(shaderProgram.programObject,"useTexture");
+    //if there is some problem
+    if (locMV<0 || locN<0 || locP<0 || texLoc <0 || locFlag<0)
+    {
+        //not all uniforms were allocated - show blue screen.
+        //check your variables properly. May be there is unused?
+        glClearColor(0,0,1,1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        //end frame visualization
+        glutSwapBuffers();
+        return;
+    }
 
-      //camera matrix. camera is placed in point "eye" and looks at point "cen".
-      glm::mat4x4 viewMatrix = glm::lookAt(eye,cen,up);
-      object *p = root;
-      std::stack<object *> que;
-      que.push(p);
-      while (!que.empty())
-      {
-          p = que.top();
-          que.pop();
-          std::vector<object *> res = p->getChilds();
-          for (unsigned i = 0; i < res.size(); i++) {
-              que.push(res[i]);
+    //camera matrix. camera is placed in point "eye" and looks at point "cen".
+    glm::mat4x4 viewMatrix = glm::lookAt(eye,cen,up);
+    object *p = root;
+    std::stack<object *> que;
+    que.push(p);
+    while (!que.empty())
+    {
+        p = que.top();
+        que.pop();
+        std::vector<object *> res = p->getChilds();
+        for (unsigned i = 0; i < res.size(); i++) {
+            que.push(res[i]);
 
-          }
-          //p->init_matrix();
-          glm::mat4 modelMatrix = p->getModelM();
-          //modelViewMatrix consists of viewMatrix and modelMatrix
-          glm::mat4 modelViewMatrix = viewMatrix*modelMatrix;
-          //calculate normal matrix
-          glm::mat4 normalMatrix = glm::inverseTranspose(modelViewMatrix);
-          //finally calculate modelViewProjectionMatrix
-          glm::mat4 modelViewProjectionMatrix = proj_matr *modelViewMatrix;
-          glUniformMatrix4fv(locMV,1,0,glm::value_ptr(modelViewMatrix));
-          glUniformMatrix4fv(locN,1,0,glm::value_ptr(normalMatrix));
-          glUniformMatrix4fv(locP,1,0,glm::value_ptr(modelViewProjectionMatrix));
-          if (p->getType() == O_BRANCH) {
-              //bind texture
-              glBindTexture(GL_TEXTURE_2D,texId[0]);
+        }
+        //p->init_matrix();
+        glm::mat4 modelMatrix = p->getModelM();
+        //modelViewMatrix consists of viewMatrix and modelMatrix
+        glm::mat4 modelViewMatrix = viewMatrix*modelMatrix;
+        //calculate normal matrix
+        glm::mat4 normalMatrix = glm::inverseTranspose(modelViewMatrix);
+        //finally calculate modelViewProjectionMatrix
+        glm::mat4 modelViewProjectionMatrix = proj_matr *modelViewMatrix;
+        glUniformMatrix4fv(locMV,1,0,glm::value_ptr(modelViewMatrix));
+        glUniformMatrix4fv(locN,1,0,glm::value_ptr(normalMatrix));
+        glUniformMatrix4fv(locP,1,0,glm::value_ptr(modelViewProjectionMatrix));
+        if (p->getType() == O_BRANCH) {
+            //bind texture
+            glBindTexture(GL_TEXTURE_2D,texId[0]);
 
-              //pass variables to the shaders
+            //pass variables to the shaders
 
-              glUniform1ui(texLoc,0);
-              glUniform1i(locFlag,useTexture);
-              VBranch->visualize();
-          } else {
-              VLeaf->visualize();
-          }
-      }
+            glUniform1ui(texLoc,0);
+            glUniform1i(locFlag,useTexture);
+            VBranch->visualize();
+        } else {
+            VLeaf->visualize();
+        }
+    }
 
 
 
-      //end frame visualization
-      //glutSwapBuffers();
+    //end frame visualization
+    //glutSwapBuffers();
 }
 
 
@@ -132,32 +133,95 @@ void Tree::update() {
 
     if (m_tick >= MAX_TICKS) {
         fprintf(stderr, "Tick %d growing stopped ROOT SONS %d\n", m_tick, root->child_cnt());
-        draw_scene();
-        glutSwapBuffers();
-        //throw "Finish";
-        return;
-    }
-    if (!root) {
-        root = new branch(NULL);
     } else {
-        if (m_tick > 0 && m_tick % T_GROW == 0) {
-            fprintf(stderr, "tick %d Growing\n", m_tick);
-            root->grow();
-       }
+        if (!root) {
+            root = new branch(NULL);
+        } else {
+            if (m_tick > 0 && m_tick % T_GROW == 0) {
+                fprintf(stderr, "tick %d Growing\n", m_tick);
+                root->grow();
+            }
+        }
+        m_tick++;
     }
-//    root = new branch();
-//    m_tick = 5;
-//    root->grow();
-//    //leaf *a = new leaf();
-//    //a->draw();
-//    draw_scene();
-//    glutSwapBuffers();
+    //    root = new branch();
+    //    m_tick = 5;
+    //    root->grow();
+    //    //leaf *a = new leaf();
+    //    //a->draw();
+    //    draw_scene();
+    //    glutSwapBuffers();
 
     //return;
-    m_tick++;
+    draw_scene();
+    //light_scene();
+    glutSwapBuffers();
 }
 
+void Tree::light_scene()
+{
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
 
+    // Light model parameters:
+    // -------------------------------------------
+
+    GLfloat lmKa[] = {0.0, 0.0, 0.0, 0.0 };
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmKa);
+
+    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, 1.0);
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, 0.0);
+
+    // -------------------------------------------
+    // Spotlight Attenuation
+
+    GLfloat spot_direction[] = {1.0, -1.0, -1.0 };
+    GLint spot_exponent = 30;
+    GLint spot_cutoff = 180;
+
+    glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spot_direction);
+    glLighti(GL_LIGHT0, GL_SPOT_EXPONENT, spot_exponent);
+    glLighti(GL_LIGHT0, GL_SPOT_CUTOFF, spot_cutoff);
+
+    GLfloat Kc = 1.0;
+    GLfloat Kl = 0.0;
+    GLfloat Kq = 0.0;
+
+    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,Kc);
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, Kl);
+    glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, Kq);
+
+
+    // -------------------------------------------
+    // Lighting parameters:
+
+    GLfloat light_pos[] = {0.0f, 5.0f, 5.0f, 1.0f};
+    GLfloat light_Ka[]  = {1.0f, 0.5f, 0.5f, 1.0f};
+    GLfloat light_Kd[]  = {1.0f, 0.1f, 0.1f, 1.0f};
+    GLfloat light_Ks[]  = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_Ka);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_Kd);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_Ks);
+
+    // -------------------------------------------
+    // Material parameters:
+
+    GLfloat material_Ka[] = {0.5f, 0.0f, 0.0f, 1.0f};
+    GLfloat material_Kd[] = {0.4f, 0.4f, 0.5f, 1.0f};
+    GLfloat material_Ks[] = {0.8f, 0.8f, 0.0f, 1.0f};
+    GLfloat material_Ke[] = {0.1f, 0.0f, 0.0f, 0.0f};
+    GLfloat material_Se = 20.0f;
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material_Ka);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material_Kd);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material_Ks);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, material_Ke);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, material_Se);
+
+}
 
 
 void Tree::gui_init()
@@ -166,6 +230,8 @@ void Tree::gui_init()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
+    glEnable(GL_LIGHTING);
+
     //initialize shader program
     shaderProgram.init(VertexShaderName.c_str(),FragmentShaderName.c_str());
     //use this shader program
@@ -205,9 +271,9 @@ void Tree::gui_pre_frame(glm::mat4 ModelMatrix, int texture_num) {
     glm::mat4 norm = glm::inverseTranspose(mv);
 
     glm::mat4 mvp = proj_matr * mv;
-//    cerr << "MODELM\n" << glm::to_string(ModelMatrix) << endl;
-//    cerr << "VM\n" << glm::to_string(view_matr) << endl;
-//    cerr << "PM\n" << glm::to_string(proj_matr) << endl;
+    //    cerr << "MODELM\n" << glm::to_string(ModelMatrix) << endl;
+    //    cerr << "VM\n" << glm::to_string(view_matr) << endl;
+    //    cerr << "PM\n" << glm::to_string(proj_matr) << endl;
     if (texture_num != -1) {
         glBindTexture(GL_TEXTURE_2D, texId[texture_num]);
     }
@@ -287,8 +353,8 @@ void Tree::keyboard(unsigned char key, int mx, int my)
     const float start_angle_psi = M_PI / 2;
     static float angle_fi = 0.0;
     static float angle_psi = 0.0;
-    /*if (key==' ')
-        useTexture = !useTexture;*/
+    if (key==' ')
+        useTexture = !useTexture;
     if (key >= 'A' && key <= 'Z') {
         key += 'a' - 'A';
     }
@@ -311,8 +377,8 @@ void Tree::keyboard(unsigned char key, int mx, int my)
     }*/
 
 
-    if (std::fabs(std::fabs(angle_psi) - M_PI / 2.0f) < 0.01   ) {
-        angle_psi = (angle_psi > 0)  ? -M_PI / 2.0f + 2.0f * eps : M_PI / 2.0f - 2.0f *eps;
+    if (std::fabs(std::fabs(angle_psi) - M_PI) < 0.01   ) {
+        angle_psi = (angle_psi > 0)  ? -M_PI  + 2.0f * eps : M_PI - 2.0f *eps;
     }
 
     float res_fi = start_angle_fi + angle_fi;
