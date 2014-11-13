@@ -1,4 +1,9 @@
 #include "branchvis.h"
+
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/ext.hpp>
 #define fsin(x) (static_cast<float> (sin(x)))
 #define fcos(x) (static_cast<float> (cos(x)))
 
@@ -34,15 +39,15 @@ void branchVis::build_model()
     pIndices = new unsigned int [indicesCount];
 
     //fill in pData array
-
-
+    const float decStep = 0.005;
     float psi = M_PI / 180.0f *  (20.0f);
+    const float al = static_cast<float>(std::atan2(decStep, 1.0f));
     //generate elements on side
     for (unsigned int j=0; j<heightStep; j++)
     {
         float zPos = cylHeight*j/(heightStep-1);
         //zPos = zPos * fsin(psi)  + 0.3;
-        //cylRadius -= 0.05;
+        cylRadius -= decStep;
         for (unsigned int i=0; i<radialStep+1; i++)
         {
             unsigned int pointId = j*(radialStep+1)+i;
@@ -53,6 +58,7 @@ void branchVis::build_model()
 
             pData[pointId].pos = glm::vec3(cylRadius*xPos, zPos,cylRadius*yPos);
             pData[pointId].nor = glm::vec3(xPos,fcos(psi),yPos);
+            pData[pointId].nor = glm::rotate(pData[pointId].nor, al,  glm::vec3(1, 0, 0));
             pData[pointId].tex = glm::vec2((xPos+1)/2, (yPos+1)/2);
         }
     }

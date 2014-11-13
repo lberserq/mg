@@ -32,6 +32,7 @@ void branch::init_matrix() {
     }
     model_matrix = glm::scale(model_matrix, glm::vec3(w,  l,  w));
     model_matrix = glm::scale(model_matrix, glm::vec3(0.05f, 1.0f, 0.05f));
+    std::cerr << "LTYME == " << my_ltime <<" MY MATRIX IS \n" << glm::to_string( model_matrix) << endl;
 }
 
 

@@ -1,6 +1,7 @@
 #include "object.h"
 #include "tree.h"
 #include "leaf.h"
+#include <glm/gtx/string_cast.hpp>
 typedef unsigned uint;
 
 #include <cstdio>
@@ -9,8 +10,8 @@ object::object(OBJ_TYPE type, object  *parent):
     m_parent(parent),
     m_type(type){
     if (parent == NULL) {
-//        angley = M_PI / 2.0f;
-//        angleoxz = M_PI / 2.0f;
+        //        angley = M_PI / 2.0f;
+        //        angleoxz = M_PI / 2.0f;
         angley = 0.0f;
         angleoxz = 0.0f;
     }
@@ -59,10 +60,15 @@ void object::get_absangles()
         abs_angy += angley;
     }
 
-    if (std::fabs(abs_angy) < MIN_ANGLE && std::fabs(abs_angy) > 1e-2) {
+
+    if ((std::fabs(abs_angy) < MIN_ANGLE && std::fabs(abs_angy) > 1e-2) || abs_angy < 0) {
         abs_angy -= angley;
         angley = (angley >= 0.0f) ? angley + MIN_ANGLE : angley - MIN_ANGLE;
         abs_angy += angley;
+    }
+
+    if (abs_angoxz < 0) {
+        abs_angoxz += M_PI * 2.0f;
     }
 
     tmp1 = abs_angy * 180.0f / M_PI;
@@ -75,17 +81,62 @@ void object::get_absangles()
         abs_angoxz += angleoxz;
     }
     tmp2 = abs_angoxz * 180.0f / M_PI;*/
-    while (fabs(abs_angoxz) > M_PI * 2.0f) {
-        abs_angoxz = (abs_angoxz > 0.0f) ? abs_angoxz - M_PI * 2.0f :
-                                           abs_angoxz + M_PI * 2.0f;
+    abs_angoxz -= std::floor(abs_angoxz / (M_PI * 2.0f)) * M_PI * 2.0f;
+
+    const float x = 69;
+    if (my_ltime == 140 && fabs(tmp1 - x) < 0.01) {
+        my_ltime = 140;
+        get_absshift();
+
     }
+
+    float ty = abs_angy, tx = abs_angoxz;
+    abs_angy *= M_PI / 180.0f;
+    abs_angoxz *= M_PI / 180.f;
+    generate_matrix();
+
+
+    glm::vec4 tmpv = model_matrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    model_matrix = glm::mat4();
+
+    absshift[0] = tmpv[0];
+    absshift[2] = tmpv[2];
+    abs_angy = ty, abs_angoxz = tx;
+
+
+
+    glm::vec2 projvct(absshift[0], absshift[2]);
+    glm::vec2 delt(fcos(abs_angoxz), fsin(abs_angoxz));
+    projvct = projvct + delt;
+    if (!(fabs(projvct[0])  > fabs(absshift[0]))) {
+        abs_angoxz -= angleoxz;
+        angleoxz = M_PI  -  angleoxz;
+        abs_angoxz += angleoxz;
+    }
+
+    if (fabs(projvct[1]) < fabs(absshift[2])) {
+        abs_angoxz -= angleoxz;
+        angleoxz = - angleoxz;
+        abs_angoxz += angleoxz;
+
+    }
+
+
+
+
 
     abs_angoxz *= 180.f / M_PI;
     abs_angy *= 180.f / M_PI;
-    /*if (abs_angoxz == 104.0f) {
-        abs_angy = 104;
-    }*/
-    std::fprintf(stderr, "%p FANGLES %.6f %.6f\n", this, abs_angy, abs_angoxz);
+
+    int gen = 0;
+    if (m_type == O_BRANCH) {
+        branch *p = dynamic_cast<branch *>(this);
+        if (p != NULL) {
+            gen = p->level_id;
+        }
+    }
+
+    std::fprintf(stderr, "%p  GENERATION %d LTIME %d FANGLES %.6f %.6f\n", this, gen, my_ltime, abs_angy, abs_angoxz);
 }
 
 void object::get_absshift() {
@@ -96,6 +147,7 @@ void object::get_absshift() {
             absshift[i] = tmp[i];
         }
     }
+    std::fprintf(stderr, "LTIME %d %s\n", my_ltime, glm::to_string(absshift).c_str());
     //absshift += shift;
 }
 

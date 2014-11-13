@@ -48,14 +48,19 @@ protected:
     glm::mat4x4 model_matrix;
     //glm::mat4x4 trans_matr;
     //Matrix my_reprentation;
+    //void out_matr(glm::mat4 t);
+    void generate_matrix() {
+        model_matrix = glm::translate(model_matrix, absshift);
+
+        model_matrix = glm::rotate(model_matrix, abs_angoxz, glm::vec3(0, 1, 0));
+        //model_matrix = gen_Rxz(abs_angoxz) * model_matrix;
+        model_matrix = glm::rotate(model_matrix, abs_angy, glm::vec3(0, 0, 1));
+    }
+
     virtual void init_matrix() {
         get_absangles();
         get_absshift();
-        model_matrix = glm::translate(model_matrix, absshift);
-        //model_matrix = glm::rotate(model_matrix, abs_angoxz, glm::vec3(0, 1, 0));
-        model_matrix = gen_Rxz(abs_angoxz) * model_matrix;
-        model_matrix = glm::rotate(model_matrix, abs_angy, glm::vec3(0, 0, 1));
-
+        generate_matrix();
     }
 
     void get_absangles(); // from parent;

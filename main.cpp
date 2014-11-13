@@ -38,7 +38,7 @@ void update()
     //make animation
 
     glutPostRedisplay();
-    usleep(100000);
+    usleep(1000);
 }
 
 
@@ -94,7 +94,7 @@ int main (int argc, char* argv[])
         glutMainLoop();
         return -1;
     }
-
+    srand(2);
 
     try
     {

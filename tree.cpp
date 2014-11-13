@@ -131,9 +131,10 @@ void Tree::draw_scene()
 void Tree::update() {
 
     if (m_tick >= MAX_TICKS) {
-        fprintf(stderr, "tick %d Growing\n", m_tick);
+        fprintf(stderr, "Tick %d growing stopped ROOT SONS %d\n", m_tick, root->child_cnt());
         draw_scene();
         glutSwapBuffers();
+        //throw "Finish";
         return;
     }
     if (!root) {
@@ -149,8 +150,8 @@ void Tree::update() {
 //    root->grow();
 //    //leaf *a = new leaf();
 //    //a->draw();
-    draw_scene();
-    glutSwapBuffers();
+//    draw_scene();
+//    glutSwapBuffers();
 
     //return;
     m_tick++;
