@@ -41,8 +41,8 @@ void branchVis::build_model()
     for (unsigned int j=0; j<heightStep; j++)
     {
         float zPos = cylHeight*j/(heightStep-1);
-        //zPos = zPos *  fsin(psi) + 0.3;
-        cylRadius -= 0.05;
+        //zPos = zPos * fsin(psi)  + 0.3;
+        //cylRadius -= 0.05;
         for (unsigned int i=0; i<radialStep+1; i++)
         {
             unsigned int pointId = j*(radialStep+1)+i;

@@ -7,6 +7,7 @@
 #include <glm/gtx/string_cast.hpp>
 #include <cstdio>
 #include <cmath>
+#include <stack>
 
 //functions for shader compilation and linking
 #include "shaderhelper.h"
@@ -53,28 +54,102 @@ void Tree::models_init() {
     init_textures();
 }
 
+void Tree::draw_scene()
+{
+    glClearColor(0,0,0,0);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+      //Draw triangle with shaders (in screen coordinates)
+      //need to set uniform in modelViewMatrix
+
+      glUseProgram(shaderProgram.programObject);
+
+      //we will need this uniform locations to connect them to our variables
+      int locMV = glGetUniformLocation(shaderProgram.programObject,"modelViewMatrix");
+      int locN = glGetUniformLocation(shaderProgram.programObject,"normalMatrix");
+      int locP = glGetUniformLocation(shaderProgram.programObject,"modelViewProjectionMatrix");
+      int texLoc = glGetUniformLocation(shaderProgram.programObject,"textureSampler");
+      int locFlag = glGetUniformLocation(shaderProgram.programObject,"useTexture");
+      //if there is some problem
+      if (locMV<0 || locN<0 || locP<0 || texLoc <0 || locFlag<0)
+      {
+          //not all uniforms were allocated - show blue screen.
+          //check your variables properly. May be there is unused?
+          glClearColor(0,0,1,1);
+          glClear(GL_COLOR_BUFFER_BIT);
+          //end frame visualization
+          glutSwapBuffers();
+          return;
+      }
+
+      //camera matrix. camera is placed in point "eye" and looks at point "cen".
+      glm::mat4x4 viewMatrix = glm::lookAt(eye,cen,up);
+      object *p = root;
+      std::stack<object *> que;
+      que.push(p);
+      while (!que.empty())
+      {
+          p = que.top();
+          que.pop();
+          std::vector<object *> res = p->getChilds();
+          for (unsigned i = 0; i < res.size(); i++) {
+              que.push(res[i]);
+
+          }
+          //p->init_matrix();
+          glm::mat4 modelMatrix = p->getModelM();
+          //modelViewMatrix consists of viewMatrix and modelMatrix
+          glm::mat4 modelViewMatrix = viewMatrix*modelMatrix;
+          //calculate normal matrix
+          glm::mat4 normalMatrix = glm::inverseTranspose(modelViewMatrix);
+          //finally calculate modelViewProjectionMatrix
+          glm::mat4 modelViewProjectionMatrix = proj_matr *modelViewMatrix;
+          glUniformMatrix4fv(locMV,1,0,glm::value_ptr(modelViewMatrix));
+          glUniformMatrix4fv(locN,1,0,glm::value_ptr(normalMatrix));
+          glUniformMatrix4fv(locP,1,0,glm::value_ptr(modelViewProjectionMatrix));
+          if (p->getType() == O_BRANCH) {
+              //bind texture
+              glBindTexture(GL_TEXTURE_2D,texId[0]);
+
+              //pass variables to the shaders
+
+              glUniform1ui(texLoc,0);
+              glUniform1i(locFlag,useTexture);
+              VBranch->visualize();
+          } else {
+              VLeaf->visualize();
+          }
+      }
+
+
+
+      //end frame visualization
+      //glutSwapBuffers();
+}
 
 
 void Tree::update() {
 
-    if (m_tick >= 50) {
-        root->draw();
+    if (m_tick >= MAX_TICKS) {
+        fprintf(stderr, "tick %d Growing\n", m_tick);
+        draw_scene();
+        glutSwapBuffers();
         return;
     }
     if (!root) {
         root = new branch(NULL);
     } else {
-        if (m_tick % T_GROW == 0) {
+        if (m_tick > 0 && m_tick % T_GROW == 0) {
             fprintf(stderr, "tick %d Growing\n", m_tick);
             root->grow();
        }
     }
 //    root = new branch();
-//    m_tick = 20;
-//    root->draw();
-    //leaf *a = new leaf();
-    //a->draw();
-    root->draw();
+//    m_tick = 5;
+//    root->grow();
+//    //leaf *a = new leaf();
+//    //a->draw();
+    draw_scene();
     glutSwapBuffers();
 
     //return;
@@ -121,6 +196,7 @@ void Tree::gui_pre_frame(glm::mat4 ModelMatrix, int texture_num) {
         glClear(GL_COLOR_BUFFER_BIT);
         //end frame visualization
         glutSwapBuffers();
+        throw "BAYDA";
         return;
     }
     view_matr = glm::lookAt(eye,cen,up);
@@ -251,5 +327,6 @@ void Tree::keyboard(unsigned char key, int mx, int my)
     eye[2] = r * fsin(res_psi) * fsin(res_fi);
     eye[1] = r * fcos(res_psi);
     std::cerr <<"Vector \n" << eye[0] << " " << eye[1] << " " << eye[2] << std::endl;
-    std::cerr << angle_psi  << std::endl;
+    std::cerr << "Angles " << angle_fi << " " <<angle_psi  << std::endl;
+    //this->draw_scene();
 }

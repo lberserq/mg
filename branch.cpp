@@ -12,11 +12,26 @@ using std::endl;
 
 
 void branch::init_matrix() {
-    model_matrix = glm::mat4();
-    model_matrix = glm::translate(model_matrix,glm::vec3(-0.5f,1.0f,0.0f));
-    object::init_matrix();
-    model_matrix = glm::scale(model_matrix,glm::vec3(0.05f * (1 + w),1.0f * (0.4 + l) ,0.05f * (1 + w)));
+    //    model_matrix = glm::mat4();
 
+    //    model_matrix = glm::translate(model_matrix,glm::vec3(-0.5f,1.0f,0.0f));
+    //    object::init_matrix();
+    //    model_matrix = glm::scale(model_matrix,glm::vec3(0.05f * (1 + w),1.0f * (0.4 + l) ,0.05f * (1 + w)));
+    model_matrix = glm::mat4();
+
+    if (m_parent) {
+        //        get_absangles();
+        //        get_absshift();
+        //        glm::vec4 tr_v = m_parent->model_matrix * glm::vec4(0.0f, h, 0.0f, 1.0f);
+        //        for (int i = 0; i < 3; i++ ) tr_v[i] = absshift[i];
+        //        model_matrix = glm::translate(model_matrix, glm::vec3(tr_v[0], tr_v[1], tr_v[2]));
+        //        model_matrix = glm::rotate(model_matrix, abs_angoxz, glm::vec3(0, 0, 1));
+        //        model_matrix = glm::rotate(model_matrix, abs_angy, glm::vec3(0, 1, 0));
+        object::init_matrix();
+
+    }
+    model_matrix = glm::scale(model_matrix, glm::vec3(w,  l,  w));
+    model_matrix = glm::scale(model_matrix, glm::vec3(0.05f, 1.0f, 0.05f));
 }
 
 
@@ -44,20 +59,24 @@ void branch::add_child(object *obj) {
             childs[i]->add_child(obj);
         }
     } else {
-        if (obj->getType() == O_BRANCH && level_id >= 0) {
-            if (childs.size() == 0) {
-                obj->shift = glm::vec3(0, l, 0);
-                obj->h = l;
-                obj->angleoxz = 0.0;
-                obj->angley = 0.0;
-            }
-            branch *p = dynamic_cast<branch *>(obj);
-            p->set_level(level_id + 1);
+        if (obj->getType() == O_BRANCH && childs.size() == 0) {
+            //if (childs.size() == 0) {
+            obj->shift = glm::vec3(0, l, 0);
+            obj->h = l;
+            obj->angleoxz = 0.0;
+            obj->angley = 0.0;
+            //            }
         } else {
-            obj->shift = glm::vec3(0, (l * (childs.size() + 1.0f)) /  MAX_CAPACITY, 0);
-            obj->h = (l * (childs.size() + 1.0f)) /  MAX_CAPACITY;
-            obj->angleoxz = M_PI / 180.0f * (rand() % 30 + 1.0f);
-            obj->angley = M_PI / 180.0f * (rand() % 10 + 1.0f);
+            //obj->shift = glm::vec3(0, (l * (childs.size() + 1.0f)) /  MAX_CAPACITY, 0);
+            obj->h = (MAX_CAPACITY - l * (childs.size() + 4.0f)) /  MAX_CAPACITY;
+            if (m_parent == NULL && obj->h < 0.1) {
+                delete obj;
+                return;
+            }
+            obj->angleoxz =  (rand() %  360 + 1.0f);
+            obj->angley = (rand() % 180 + 1.0f);
+            obj->angleoxz *= M_PI / 180.0f;
+            obj->angley *= M_PI / 180.0f;
         }
         object::add_child(obj);
     }
@@ -81,16 +100,28 @@ void branch::draw() {
     branchVis *f = Tree::getBranchVis();
     f->build_model();
     Tree::gui_pre_frame(model_matrix, 0);
-    if (childs.size() || m_parent != NULL) {
-        //std::cerr << "MY_MATRIX IS \n" << glm::to_string(trans_matr * model_matrix) << endl;
+    if (childs.size() >=0 || m_parent != NULL) {
+        //std::cerr << "MY_MATRIX IS \n" << glm::to_string( model_matrix) << endl;
     }
-//    f->visualize();
-//    return;
+    //    f->visualize();
+    //    return;
+
+    f->visualize();
     for (unsigned i = 0; i < childs.size(); i++) {
         childs[i]->draw();
     }
 
-    f->visualize();
 
 }
 
+void branch::grow()
+{
+    if (m_parent && fabs(max_l - 1.0f) < 1e-2 && fabs(max_w - 1.0f) < 1e-2) {
+
+        for (int i = 0; i < level_id; i++) {
+            max_l *= m_fChildBranchLC;
+            max_w *= m_fChildBranchWC;
+        }
+    }
+    object::grow();
+}

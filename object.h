@@ -37,6 +37,7 @@ protected:
     float l, w;
     float m_fLength;
     float m_fWidth;
+    float max_l, max_w;
 
     int my_ltime;
     object *m_parent;
@@ -50,15 +51,31 @@ protected:
     virtual void init_matrix() {
         get_absangles();
         get_absshift();
-        model_matrix = glm::translate(model_matrix, absshift)
-                * glm::rotate(model_matrix, (abs_angy), glm::vec3(0.0f, 1.0f, 0.0f))
-                * glm::rotate(model_matrix, (abs_angoxz), glm::vec3(0.0f, 0.0f, 1.0f));
+        model_matrix = glm::translate(model_matrix, absshift);
+        //model_matrix = glm::rotate(model_matrix, abs_angoxz, glm::vec3(0, 1, 0));
+        model_matrix = gen_Rxz(abs_angoxz) * model_matrix;
+        model_matrix = glm::rotate(model_matrix, abs_angy, glm::vec3(0, 0, 1));
+
     }
 
     void get_absangles(); // from parent;
     void get_absshift();
 
 public:
+    int child_cnt() const {
+        return childs.size();
+    }
+    glm::mat4 getModelM() {
+        init_matrix();
+        return model_matrix;
+    }
+    std::vector<object *> getChilds() const {
+        return childs;
+    }
+    OBJ_TYPE get_type() const {
+        return m_type;
+    }
+
 
     static glm::mat4 gen_Ry(float fi) {
         glm::mat4 res = glm::mat4();

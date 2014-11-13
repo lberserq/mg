@@ -12,15 +12,18 @@
 
 #include <string>
 //world parameters
-const float m_fChildBranchLC = 0.2;
-const float m_fChildBranchWC = 0.001;
+const float m_fChildBranchLC = 0.59;
+const float m_fChildBranchWC = 0.7;
 
-const float m_fIncLStep = 0.05;
-const float m_fIncWStep = 0.001;
 const int T_GROW = 5;
-const int T_NEW = 25;
+const int T_NEW = 7;
 
-const double MAX_ANGLE = M_PIl / 180.0  * 120.0;
+const float m_fIncLStep = 0.1 * T_NEW;
+const float m_fIncWStep = 0.002 * T_NEW;
+
+const double MAX_ANGLE = M_PIl / 180.0  * 70.0;
+const double MIN_ANGLE = M_PIl / 180.0 * 10.0;
+const int MAX_TICKS = 5 + 4 * T_GROW * T_NEW;
 
 using std::string;
 enum
@@ -58,6 +61,7 @@ class Tree //WORLD CLASS
     static bool  useTexture;
 
     static ShaderProgram shaderProgram;
+    void draw_scene();
   //  Tree();
 public:
     /*Tree() {
@@ -89,7 +93,7 @@ public:
 
     void update();
     void models_init();
-    void gl_init();
+    //void gl_init();
     void gui_init();
     static void gui_pre_frame(glm::mat4 ModelMatrix, int texture_num);
     void init_textures();

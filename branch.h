@@ -21,5 +21,6 @@ public:
     }
     virtual void add_child(object *obj) override;
     void draw() override;
+    void grow() override;
 };
 

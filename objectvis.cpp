@@ -57,5 +57,4 @@ void objectVis::visualize()
     glBindVertexArray(vao);
     glDrawElements(GL_TRIANGLES,indicesCount,GL_UNSIGNED_INT,0);
     glBindVertexArray(0);
-    //glutSwapBuffers();
 }
